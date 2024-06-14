@@ -22,11 +22,12 @@ type elasticsearchExporter struct {
 	component.TelemetrySettings
 	userAgent string
 
-	config         *Config
-	index          string
-	logstashFormat LogstashFormatSettings
-	dynamicIndex   bool
-	model          mappingModel
+	config           *Config
+	index            string
+	logstashFormat   LogstashFormatSettings
+	dynamicIndex     bool
+	dynamicIndexMode DynamicIndexMode
+	model            mappingModel
 
 	bulkIndexer *esBulkIndexerCurrent
 }
@@ -36,6 +37,7 @@ func newExporter(
 	set exporter.Settings,
 	index string,
 	dynamicIndex bool,
+	dynamicIndexMode DynamicIndexMode,
 ) (*elasticsearchExporter, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err
@@ -59,11 +61,12 @@ func newExporter(
 		TelemetrySettings: set.TelemetrySettings,
 		userAgent:         userAgent,
 
-		config:         cfg,
-		index:          index,
-		dynamicIndex:   dynamicIndex,
-		model:          model,
-		logstashFormat: cfg.LogstashFormat,
+		config:           cfg,
+		index:            index,
+		dynamicIndex:     dynamicIndex,
+		dynamicIndexMode: dynamicIndexMode,
+		model:            model,
+		logstashFormat:   cfg.LogstashFormat,
 	}, nil
 }
 
@@ -117,10 +120,17 @@ func (e *elasticsearchExporter) pushLogsData(ctx context.Context, ld plog.Logs) 
 func (e *elasticsearchExporter) pushLogRecord(ctx context.Context, resource pcommon.Resource, record plog.LogRecord, scope pcommon.InstrumentationScope) error {
 	fIndex := e.index
 	if e.dynamicIndex {
-		prefix := getFromAttributes(indexPrefix, resource, scope, record)
-		suffix := getFromAttributes(indexSuffix, resource, scope, record)
+		if e.dynamicIndexMode == DynamicIndexModeDataStream {
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes(), record.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes(), record.Attributes())
 
-		fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+			fIndex = fmt.Sprintf("logs-%s-%s", dataSet, namespace)
+		} else {
+			prefix := getFromAttributes(indexPrefix, resource, scope, record)
+			suffix := getFromAttributes(indexSuffix, resource, scope, record)
+
+			fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+		}
 	}
 
 	if e.logstashFormat.Enabled {
@@ -175,10 +185,15 @@ func (e *elasticsearchExporter) pushMetricSlice(
 ) error {
 	fIndex := e.index
 	if e.dynamicIndex {
-		prefix := getFromAttributesNew(indexPrefix, "", resource.Attributes())
-		suffix := getFromAttributesNew(indexSuffix, "", resource.Attributes())
-
-		fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+		if e.dynamicIndexMode == DynamicIndexModeDataStream {
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes())
+			fIndex = fmt.Sprintf("metrics-%s-%s", dataSet, namespace)
+		} else {
+			prefix := getFromAttributesNew(indexPrefix, "", resource.Attributes())
+			suffix := getFromAttributesNew(indexSuffix, "", resource.Attributes())
+			fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+		}
 	}
 
 	documents, err := e.model.encodeMetrics(resource, slice, scope)
@@ -228,10 +243,17 @@ func (e *elasticsearchExporter) pushTraceData(
 func (e *elasticsearchExporter) pushTraceRecord(ctx context.Context, resource pcommon.Resource, span ptrace.Span, scope pcommon.InstrumentationScope) error {
 	fIndex := e.index
 	if e.dynamicIndex {
-		prefix := getFromAttributes(indexPrefix, resource, scope, span)
-		suffix := getFromAttributes(indexSuffix, resource, scope, span)
+		if e.dynamicIndexMode == DynamicIndexModeDataStream {
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes())
 
-		fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+			fIndex = fmt.Sprintf("traces-%s-%s", dataSet, namespace)
+		} else {
+			prefix := getFromAttributes(indexPrefix, resource, scope, span)
+			suffix := getFromAttributes(indexSuffix, resource, scope, span)
+
+			fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
+		}
 	}
 
 	if e.logstashFormat.Enabled {

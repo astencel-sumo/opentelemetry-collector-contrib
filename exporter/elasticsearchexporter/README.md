@@ -88,23 +88,39 @@ This can be customised through the following settings:
 
 - `index` (DEPRECATED, please use `logs_index` for logs, `traces_index` for traces): The [index] or [data stream] name to publish events to.
    The default value is `logs-generic-default`.
+
 - `logs_index`: The [index] or [data stream] name to publish events to.  The default value is `logs-generic-default`
-- `logs_dynamic_index` (optional):
-  takes resource or log record attribute named `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
-  resulting dynamically prefixed / suffixed indexing based on `logs_index`. (priority: resource attribute > log record attribute)
+
+- `logs_dynamic_index` (optional): uses resource or log record attributes to dynamically construct index name. See `mode` for details.
   - `enabled`(default=false): Enable/Disable dynamic index for log records
+  - `mode` (default=`prefix_suffix`): defines how dynamic index name is constructed.
+    - `prefix_suffix` - uses resource or log record attributes `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
+      to dynamically construct index name in the form `${elasticsearch.index.prefix}${logs_index}${elasticsearch.index.suffix}`. (priority: resource attribute > log record attribute)
+    - `data_stream` - uses resource or log record attributes `data_stream.dataset` and `data_stream.namespace`
+      to dynamically construct index name in the form `logs-${data_stream.dataset}-${data_stream.namespace}`. (priority: resource attribute > log record attribute)
+
 - `metrics_index`: The [index] or [data stream] name to publish events to. The default value is `metrics-generic-default`.
   ⚠️ Note that metrics support is currently in development.
-- `metrics_dynamic_index` (optional):
-  takes resource attributes named `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
-  resulting dynamically prefixed / suffixed indexing based on `metrics_index`.
+
+- `metrics_dynamic_index` (optional): uses resource attributes to dynamically construct index name. See `mode` for details.
   ⚠️ Note that metrics support is currently in development.
   - `enabled`(default=false): Enable/Disable dynamic index for metrics
+  - `mode` (default=`prefix_suffix`): defines how dynamic index name is constructed.
+    - `prefix_suffix` - uses resource attributes `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
+      to dynamically construct index name in the form `${elasticsearch.index.prefix}${metrics_index}${elasticsearch.index.suffix}`.
+    - `data_stream` - uses resource attributes `data_stream.dataset` and `data_stream.namespace`
+      to dynamically construct index name in the form `metrics-${data_stream.dataset}-${data_stream.namespace}`.
+
 - `traces_index`: The [index] or [data stream] name to publish traces to. The default value is `traces-generic-default`.
-- `traces_dynamic_index` (optional):
-  takes resource or span attribute named `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
-  resulting dynamically prefixed / suffixed indexing based on `traces_index`. (priority: resource attribute > span attribute)
+
+- `traces_dynamic_index` (optional): uses resource or span attributes to dynamically construct index name. See `mode` for details.
   - `enabled`(default=false): Enable/Disable dynamic index for trace spans
+  - `mode` (default=`prefix_suffix`): defines how dynamic index name is constructed.
+    - `prefix_suffix` - uses resource or span attributes `elasticsearch.index.prefix` and `elasticsearch.index.suffix`
+      to dynamically construct index name in the form `${elasticsearch.index.prefix}${traces_index}${elasticsearch.index.suffix}`. (priority: resource attribute > span attribute)
+    - `data_stream` - uses resource attributes `data_stream.dataset` and `data_stream.namespace`
+      to dynamically construct index name in the form `traces-${data_stream.dataset}-${data_stream.namespace}`.
+
 - `logstash_format` (optional): Logstash format compatibility. Traces or Logs data can be written into an index in logstash format.
   - `enabled`(default=false):  Enable/Disable Logstash format compatibility. When `logstash_format.enabled` is `true`, the index name is composed using `traces/logs_index` or `traces/logs_dynamic_index` as prefix and the date, 
                                 e.g: If `traces/logs_index` or `traces/logs_dynamic_index` is equals to `otlp-generic-default` your index will become `otlp-generic-default-YYYY.MM.DD`. 
