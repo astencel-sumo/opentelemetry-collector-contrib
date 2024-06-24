@@ -55,8 +55,8 @@ func createDefaultConfig() component.Config {
 		},
 		MetricsIndex: defaultMetricsIndex,
 		MetricsDynamicIndex: DynamicIndexSetting{
-			Enabled: false,
-			Mode:    DynamicIndexModePrefixSuffix,
+			Enabled: true,
+			Mode:    DynamicIndexModeDataStream,
 		},
 		TracesIndex: defaultTracesIndex,
 		TracesDynamicIndex: DynamicIndexSetting{

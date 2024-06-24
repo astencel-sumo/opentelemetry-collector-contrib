@@ -66,8 +66,8 @@ func TestConfig(t *testing.T) {
 				},
 				MetricsIndex: "metrics-generic-default",
 				MetricsDynamicIndex: DynamicIndexSetting{
-					Enabled: false,
-					Mode:    DynamicIndexModePrefixSuffix,
+					Enabled: true,
+					Mode:    DynamicIndexModeDataStream,
 				},
 				TracesIndex: "trace_index",
 				TracesDynamicIndex: DynamicIndexSetting{
@@ -131,8 +131,8 @@ func TestConfig(t *testing.T) {
 				},
 				MetricsIndex: "metrics-generic-default",
 				MetricsDynamicIndex: DynamicIndexSetting{
-					Enabled: false,
-					Mode:    DynamicIndexModePrefixSuffix,
+					Enabled: true,
+					Mode:    DynamicIndexModeDataStream,
 				},
 				TracesIndex: "traces-generic-default",
 				TracesDynamicIndex: DynamicIndexSetting{
@@ -196,8 +196,8 @@ func TestConfig(t *testing.T) {
 				},
 				MetricsIndex: "my_metric_index",
 				MetricsDynamicIndex: DynamicIndexSetting{
-					Enabled: false,
-					Mode:    DynamicIndexModePrefixSuffix,
+					Enabled: true,
+					Mode:    DynamicIndexModeDataStream,
 				},
 				TracesIndex: "traces-generic-default",
 				TracesDynamicIndex: DynamicIndexSetting{

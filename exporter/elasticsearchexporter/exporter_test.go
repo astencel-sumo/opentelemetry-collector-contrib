@@ -527,7 +527,7 @@ func TestExporterMetrics(t *testing.T) {
 
 		exporter := newTestMetricsExporter(t, server.URL, func(cfg *Config) {
 			cfg.MetricsIndex = "metrics.index"
-			cfg.MetricsDynamicIndex.Enabled = true
+			cfg.MetricsDynamicIndex.Mode = DynamicIndexModePrefixSuffix
 		})
 		metrics := newMetricsWithAttributeAndResourceMap(
 			map[string]string{
@@ -565,8 +565,6 @@ func TestExporterMetrics(t *testing.T) {
 
 		exporter := newTestMetricsExporter(t, server.URL, func(cfg *Config) {
 			cfg.MetricsIndex = "metrics.index"
-			cfg.MetricsDynamicIndex.Enabled = true
-			cfg.MetricsDynamicIndex.Mode = DynamicIndexModeDataStream
 		})
 		metrics := newMetricsWithAttributeAndResourceMap(
 			map[string]string{
