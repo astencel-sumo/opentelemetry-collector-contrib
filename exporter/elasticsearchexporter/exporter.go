@@ -121,8 +121,8 @@ func (e *elasticsearchExporter) pushLogRecord(ctx context.Context, resource pcom
 	fIndex := e.index
 	if e.dynamicIndex {
 		if e.dynamicIndexMode == DynamicIndexModeDataStream {
-			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes(), record.Attributes())
-			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes(), record.Attributes())
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, record.Attributes(), scope.Attributes(), resource.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, record.Attributes(), scope.Attributes(), resource.Attributes())
 
 			fIndex = fmt.Sprintf("logs-%s-%s", dataSet, namespace)
 		} else {
@@ -199,12 +199,12 @@ func (e *elasticsearchExporter) pushMetricDataPoint(
 	fIndex := e.index
 	if e.dynamicIndex {
 		if e.dynamicIndexMode == DynamicIndexModeDataStream {
-			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
-			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, dataPoint.Attributes(), scope.Attributes(), resource.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, dataPoint.Attributes(), scope.Attributes(), resource.Attributes())
 			fIndex = fmt.Sprintf("metrics-%s-%s", dataSet, namespace)
 		} else {
-			prefix := getFromAttributesNew(indexPrefix, "", resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
-			suffix := getFromAttributesNew(indexSuffix, "", resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
+			prefix := getFromAttributesNew(indexPrefix, "", dataPoint.Attributes(), scope.Attributes(), resource.Attributes())
+			suffix := getFromAttributesNew(indexSuffix, "", dataPoint.Attributes(), scope.Attributes(), resource.Attributes())
 			fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
 		}
 	}
@@ -258,8 +258,8 @@ func (e *elasticsearchExporter) pushTraceRecord(ctx context.Context, resource pc
 	fIndex := e.index
 	if e.dynamicIndex {
 		if e.dynamicIndexMode == DynamicIndexModeDataStream {
-			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes())
-			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes())
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, span.Attributes(), scope.Attributes(), resource.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, span.Attributes(), scope.Attributes(), resource.Attributes())
 
 			fIndex = fmt.Sprintf("traces-%s-%s", dataSet, namespace)
 		} else {
