@@ -160,55 +160,69 @@ func (e *elasticsearchExporter) pushMetricsData(
 		resource := resourceMetric.Resource()
 		scopeMetrics := resourceMetric.ScopeMetrics()
 		for j := 0; j < scopeMetrics.Len(); j++ {
-			scope := scopeMetrics.At(j).Scope()
-			metricSlice := scopeMetrics.At(j).Metrics()
+			scopeMetrics := scopeMetrics.At(j)
+			for k := 0; k < scopeMetrics.Metrics().Len(); k++ {
+				metric := scopeMetrics.Metrics().At(k)
 
-			if err := e.pushMetricSlice(ctx, resource, metricSlice, scope); err != nil {
-				if ctxErr := ctx.Err(); ctxErr != nil {
-					return ctxErr
+				// We only support Sum and Gauge metrics at the moment.
+				var dataPoints pmetric.NumberDataPointSlice
+				switch metric.Type() {
+				case pmetric.MetricTypeSum:
+					dataPoints = metric.Sum().DataPoints()
+				case pmetric.MetricTypeGauge:
+					dataPoints = metric.Gauge().DataPoints()
 				}
 
-				errs = append(errs, err)
+				for l := 0; l < dataPoints.Len(); l++ {
+					dataPoint := dataPoints.At(l)
+					if err := e.pushMetricDataPoint(ctx, resource, scopeMetrics.Scope(), metric, dataPoint); err != nil {
+						if cerr := ctx.Err(); cerr != nil {
+							return cerr
+						}
+						errs = append(errs, err)
+					}
+				}
 			}
-
 		}
 	}
 
 	return errors.Join(errs...)
 }
 
-func (e *elasticsearchExporter) pushMetricSlice(
+func (e *elasticsearchExporter) pushMetricDataPoint(
 	ctx context.Context,
 	resource pcommon.Resource,
-	slice pmetric.MetricSlice,
 	scope pcommon.InstrumentationScope,
+	metric pmetric.Metric,
+	dataPoint pmetric.NumberDataPoint,
 ) error {
 	fIndex := e.index
 	if e.dynamicIndex {
 		if e.dynamicIndexMode == DynamicIndexModeDataStream {
-			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes())
-			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes())
+			dataSet := getFromAttributesNew(dataStreamDataset, defaultDataStreamDataset, resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
+			namespace := getFromAttributesNew(dataStreamNamespace, defaultDataStreamNamespace, resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
 			fIndex = fmt.Sprintf("metrics-%s-%s", dataSet, namespace)
 		} else {
-			prefix := getFromAttributesNew(indexPrefix, "", resource.Attributes())
-			suffix := getFromAttributesNew(indexSuffix, "", resource.Attributes())
+			prefix := getFromAttributesNew(indexPrefix, "", resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
+			suffix := getFromAttributesNew(indexSuffix, "", resource.Attributes(), scope.Attributes(), dataPoint.Attributes())
 			fIndex = fmt.Sprintf("%s%s%s", prefix, fIndex, suffix)
 		}
 	}
 
-	documents, err := e.model.encodeMetrics(resource, slice, scope)
-	if err != nil {
-		return fmt.Errorf("failed to encode a metric event: %w", err)
-	}
-
-	for _, document := range documents {
-		err := pushDocuments(ctx, fIndex, document, e.bulkIndexer)
+	if e.logstashFormat.Enabled {
+		formattedIndex, err := generateIndexWithLogstashFormat(fIndex, &e.logstashFormat, time.Now())
 		if err != nil {
 			return err
 		}
+		fIndex = formattedIndex
 	}
 
-	return nil
+	document, err := e.model.encodeMetricDataPoint(resource, scope, metric, dataPoint)
+	if err != nil {
+		return fmt.Errorf("failed to encode a metric data point: %w", err)
+	}
+
+	return pushDocuments(ctx, fIndex, document, e.bulkIndexer)
 }
 
 func (e *elasticsearchExporter) pushTraceData(

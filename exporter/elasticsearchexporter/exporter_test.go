@@ -519,7 +519,7 @@ func TestExporterMetrics(t *testing.T) {
 			assert.NoError(t, err)
 
 			create := jsonVal["create"].(map[string]any)
-			expected := "my.prefix-metrics.index"
+			expected := "data.point.prefix-metrics.index-resource.suffix"
 			assert.Equal(t, expected, create["_index"].(string))
 
 			return itemsAllOK(docs)
@@ -531,10 +531,11 @@ func TestExporterMetrics(t *testing.T) {
 		})
 		metrics := newMetricsWithAttributeAndResourceMap(
 			map[string]string{
-				indexSuffix: "data.point.attributes.are.not.used",
+				indexPrefix: "data.point.prefix-",
+				indexSuffix: "data.point.suffix.is.overridden.by.resource.suffix",
 			},
 			map[string]string{
-				indexPrefix: "my.prefix-",
+				indexSuffix: "-resource.suffix",
 			},
 		)
 		metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).SetName("my.metric")
@@ -556,7 +557,7 @@ func TestExporterMetrics(t *testing.T) {
 			assert.NoError(t, err)
 
 			create := jsonVal["create"].(map[string]any)
-			expected := "metrics-my.dataset-my.namespace"
+			expected := "metrics-data.point.dataset-resource.namespace"
 			assert.Equal(t, expected, create["_index"].(string))
 
 			return itemsAllOK(docs)
@@ -569,11 +570,11 @@ func TestExporterMetrics(t *testing.T) {
 		})
 		metrics := newMetricsWithAttributeAndResourceMap(
 			map[string]string{
-				dataStreamDataset: "data.point.attributes.are.not.used",
+				dataStreamDataset:   "data.point.dataset",
+				dataStreamNamespace: "data.point.namespace.is.overridden.by.resource.namespace",
 			},
 			map[string]string{
-				dataStreamDataset:   "my.dataset",
-				dataStreamNamespace: "my.namespace",
+				dataStreamNamespace: "resource.namespace",
 			},
 		)
 		metrics.ResourceMetrics().At(0).ScopeMetrics().At(0).Metrics().At(0).SetName("my.metric")
