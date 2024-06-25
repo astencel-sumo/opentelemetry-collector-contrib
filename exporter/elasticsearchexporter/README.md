@@ -98,9 +98,9 @@ This can be customised through the following settings:
       to dynamically construct index name in the form `${elasticsearch.index.prefix}${logs_index}${elasticsearch.index.suffix}`. (priority: resource attribute > log record attribute)
     - `data_stream` - uses resource or log record attributes `data_stream.dataset` and `data_stream.namespace`
       to dynamically construct index name in the form `logs-${data_stream.dataset}-${data_stream.namespace}`.
-      Data point attributes take precedence over scope attributes, which take precedence over resource attributes.
+      Log record attributes take precedence over scope attributes, which take precedence over resource attributes.
 
-- `metrics_index` (optional): The [index] or [data stream] name to publish events to. The default value is `metrics-generic-default`.
+- `metrics_index` (optional): The [index] or [data stream] name to publish metrics to. The default value is `metrics-generic-default`.
   ⚠️ Note that metrics support is currently in development.
 
 - `metrics_dynamic_index` (optional): uses resource, scope or data point attributes to dynamically construct index name. See `mode` for details.
@@ -123,7 +123,7 @@ This can be customised through the following settings:
       to dynamically construct index name in the form `${elasticsearch.index.prefix}${traces_index}${elasticsearch.index.suffix}`. (priority: resource attribute > span attribute)
     - `data_stream` - uses resource attributes `data_stream.dataset` and `data_stream.namespace`
       to dynamically construct index name in the form `traces-${data_stream.dataset}-${data_stream.namespace}`.
-      Data point attributes take precedence over scope attributes, which take precedence over resource attributes.
+      Span attributes take precedence over scope attributes, which take precedence over resource attributes.
 
 - `logstash_format` (optional): Logstash format compatibility. Logs, metrics and traces can be written into an index in Logstash format.
   - `enabled`(default=false):  Enable/disable Logstash format compatibility. When `logstash_format.enabled` is `true`, the index name is composed using `(logs|metrics|traces)_index` or `(logs|metrics|traces)_dynamic_index` as prefix and the date as suffix,
